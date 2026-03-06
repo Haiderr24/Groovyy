@@ -26,8 +26,20 @@ export default function FavoritesPage() {
   const userId = user?.id || '';
   
   const { favorites, removeFavorite, isLoading, error, refreshFavorites } = useFavorites(userId);
-  const { isPlaying, currentTime, duration, loadTrack, togglePlayPause, seek } = useAudioPlayer();
   const [playingTrackId, setPlayingTrackId] = useState<number | null>(null);
+
+  const playingTrack = favorites.find(f => f.id === playingTrackId);
+  const trackInfo = playingTrack ? {
+    trackId: playingTrack.id,
+    trackTitle: playingTrack.title,
+    trackArtist: playingTrack.artist,
+    trackGenre: playingTrack.genre,
+    albumName: playingTrack.albumName,
+    artworkUrl: playingTrack.artworkUrl,
+    previewUrl: playingTrack.previewUrl,
+  } : undefined;
+
+  const { isPlaying, currentTime, duration, loadTrack, togglePlayPause, seek } = useAudioPlayer(trackInfo);
 
   useEffect(() => {
     if (!authLoading && !user) {

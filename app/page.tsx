@@ -37,6 +37,16 @@ export default function Home() {
 
   const { favorites, addFavorite, removeFavorite, isFavorite } = useFavorites(userId);
 
+  const trackInfo = tracks[currentIndex] ? {
+    trackId: tracks[currentIndex].id,
+    trackTitle: tracks[currentIndex].title,
+    trackArtist: tracks[currentIndex].artist,
+    trackGenre: tracks[currentIndex].genre,
+    albumName: tracks[currentIndex].albumName,
+    artworkUrl: tracks[currentIndex].artworkUrl,
+    previewUrl: tracks[currentIndex].previewUrl,
+  } : undefined;
+
   const {
     isPlaying,
     currentTime,
@@ -49,7 +59,7 @@ export default function Home() {
     analyser,
     pause,
     play
-  } = useAudioPlayer();
+  } = useAudioPlayer(trackInfo);
 
   const fetchMoreTracks = useCallback(async () => {
   if (isFetchingMore || !user) return;
