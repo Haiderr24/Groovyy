@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import SwipeCard from '@/components/SwipeCard';
 import { getTopChartsByGenre, getPopularClassics, getTrendingGenres, type Track } from '@/lib/itunes';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
@@ -37,15 +37,17 @@ export default function Home() {
 
   const { favorites, addFavorite, removeFavorite, isFavorite } = useFavorites(userId);
 
-  const trackInfo = tracks[currentIndex] ? {
-    trackId: tracks[currentIndex].id,
-    trackTitle: tracks[currentIndex].title,
-    trackArtist: tracks[currentIndex].artist,
-    trackGenre: tracks[currentIndex].genre,
-    albumName: tracks[currentIndex].albumName,
-    artworkUrl: tracks[currentIndex].artworkUrl,
-    previewUrl: tracks[currentIndex].previewUrl,
-  } : undefined;
+  const trackInfo = useMemo(() => {
+    return tracks[currentIndex] ? {
+      trackId: tracks[currentIndex].id,
+      trackTitle: tracks[currentIndex].title,
+      trackArtist: tracks[currentIndex].artist,
+      trackGenre: tracks[currentIndex].genre,
+      albumName: tracks[currentIndex].albumName,
+      artworkUrl: tracks[currentIndex].artworkUrl,
+      previewUrl: tracks[currentIndex].previewUrl,
+    } : undefined;
+  }, [tracks, currentIndex]);
 
   const {
     isPlaying,
@@ -179,6 +181,13 @@ export default function Home() {
       loadAndPlay();
     }
   }, [currentIndex, tracks, loadTrack, pause, play]);
+
+  // Cleanup: pause audio when navigating away from the page
+  useEffect(() => {
+    return () => {
+      pause();
+    };
+  }, [pause]);
 
   const handleSave = async () => {
     const currentTrack = tracks[currentIndex];

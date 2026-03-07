@@ -21,9 +21,16 @@ export function useAudioPlayer(trackInfo?: TrackInfo) {
   const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
   const playStartTimeRef = useRef<number>(0);
   const hasTrackedPlayRef = useRef<boolean>(false);
+  const trackInfoRef = useRef<TrackInfo | undefined>(trackInfo);
+
+  // Update ref when trackInfo changes
+  useEffect(() => {
+    trackInfoRef.current = trackInfo;
+  }, [trackInfo]);
 
   const trackPlayEvent = useCallback(async (durationPlayed: number, completed: boolean) => {
-    if (!trackInfo) return;
+    const currentTrackInfo = trackInfoRef.current;
+    if (!currentTrackInfo) return;
 
     try {
       const token = localStorage.getItem('token');
@@ -36,13 +43,13 @@ export function useAudioPlayer(trackInfo?: TrackInfo) {
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          trackId: trackInfo.trackId,
-          trackTitle: trackInfo.trackTitle,
-          trackArtist: trackInfo.trackArtist,
-          trackGenre: trackInfo.trackGenre,
-          albumName: trackInfo.albumName,
-          artworkUrl: trackInfo.artworkUrl,
-          previewUrl: trackInfo.previewUrl,
+          trackId: currentTrackInfo.trackId,
+          trackTitle: currentTrackInfo.trackTitle,
+          trackArtist: currentTrackInfo.trackArtist,
+          trackGenre: currentTrackInfo.trackGenre,
+          albumName: currentTrackInfo.albumName,
+          artworkUrl: currentTrackInfo.artworkUrl,
+          previewUrl: currentTrackInfo.previewUrl,
           durationPlayed,
           completed,
         }),
@@ -50,7 +57,7 @@ export function useAudioPlayer(trackInfo?: TrackInfo) {
     } catch (error) {
       console.error('Failed to track play event:', error);
     }
-  }, [trackInfo]);
+  }, []);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -67,7 +74,7 @@ export function useAudioPlayer(trackInfo?: TrackInfo) {
 
       const handleEnded = () => {
         const durationPlayed = Date.now() - playStartTimeRef.current;
-        if (trackInfo && durationPlayed > 0) {
+        if (trackInfoRef.current && durationPlayed > 0) {
           trackPlayEvent(durationPlayed / 1000, true);
         }
         setIsPlaying(false);
@@ -86,7 +93,7 @@ export function useAudioPlayer(trackInfo?: TrackInfo) {
         audioRef.current?.removeEventListener('ended', handleEnded);
       };
     }
-  }, [trackInfo, trackPlayEvent]);
+  }, [trackPlayEvent]);
 
   const initAudioContext = useCallback(() => {
     if (audioRef.current && !audioContextRef.current) {
@@ -139,14 +146,14 @@ export function useAudioPlayer(trackInfo?: TrackInfo) {
   const pause = useCallback(() => {
     if (audioRef.current) {
       const durationPlayed = Date.now() - playStartTimeRef.current;
-      if (trackInfo && durationPlayed > 3000 && !hasTrackedPlayRef.current) {
+      if (trackInfoRef.current && durationPlayed > 3000 && !hasTrackedPlayRef.current) {
         trackPlayEvent(durationPlayed / 1000, false);
         hasTrackedPlayRef.current = true;
       }
       audioRef.current.pause();
       setIsPlaying(false);
     }
-  }, [trackInfo, trackPlayEvent]);
+  }, [trackPlayEvent]);
 
   const togglePlayPause = useCallback(() => {
     if (isPlaying) {
