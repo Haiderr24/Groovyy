@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserFavorites, addUserFavorite, removeUserFavorite, isTrackFavorite } from '@/lib/userFavorites';
+import { recordFavoriteEvent } from '@/lib/listening-history';
+import { ObjectId } from 'mongodb';
 
 // GET /api/favorites - Get user's favorites
 export async function GET(request: NextRequest) {
@@ -60,6 +62,23 @@ export async function POST(request: NextRequest) {
     const success = await addUserFavorite(userId, userFavorite);
 
     if (success) {
+      // Track the favorite event for analytics
+      try {
+        await recordFavoriteEvent({
+          userId: new ObjectId(userId),
+          trackId: track.id,
+          trackTitle: track.title,
+          trackArtist: track.artist,
+          trackGenre: track.genre,
+          albumName: track.albumName,
+          artworkUrl: track.artworkUrl,
+          action: 'added',
+        });
+      } catch (err) {
+        console.error('Failed to record favorite event:', err);
+        // Don't fail the request if analytics tracking fails
+      }
+
       return NextResponse.json({ success: true, message: 'Track added to favorites' });
     } else {
       return NextResponse.json({ error: 'Failed to add favorite' }, { status: 500 });
@@ -81,9 +100,32 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'User ID and track ID are required' }, { status: 400 });
     }
 
+    // Get track details before removing for analytics
+    const favorites = await getUserFavorites(userId);
+    const trackToRemove = favorites.find(fav => fav.trackId === parseInt(trackId));
+
     const success = await removeUserFavorite(userId, parseInt(trackId));
-    
+
     if (success) {
+      // Track the unfavorite event for analytics
+      if (trackToRemove) {
+        try {
+          await recordFavoriteEvent({
+            userId: new ObjectId(userId),
+            trackId: trackToRemove.trackId,
+            trackTitle: trackToRemove.title,
+            trackArtist: trackToRemove.artist,
+            trackGenre: trackToRemove.genre,
+            albumName: trackToRemove.albumName,
+            artworkUrl: trackToRemove.artworkUrl,
+            action: 'removed',
+          });
+        } catch (err) {
+          console.error('Failed to record favorite removal event:', err);
+          // Don't fail the request if analytics tracking fails
+        }
+      }
+
       return NextResponse.json({ success: true, message: 'Track removed from favorites' });
     } else {
       return NextResponse.json({ error: 'Failed to remove favorite' }, { status: 500 });

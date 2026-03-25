@@ -16,11 +16,33 @@ export interface ListeningEvent {
   completed: boolean; // did they listen to the full preview?
 }
 
+export interface FavoriteEvent {
+  _id?: ObjectId;
+  userId: ObjectId;
+  trackId: number;
+  trackTitle: string;
+  trackArtist: string;
+  trackGenre: string;
+  albumName: string;
+  artworkUrl: string;
+  action: 'added' | 'removed';
+  timestamp: Date;
+}
+
 export async function recordPlayEvent(event: Omit<ListeningEvent, '_id'>) {
   const db = await getDatabase();
   const result = await db.collection<ListeningEvent>('listening_history').insertOne({
     ...event,
     playedAt: new Date(),
+  });
+  return result.insertedId;
+}
+
+export async function recordFavoriteEvent(event: Omit<FavoriteEvent, '_id' | 'timestamp'>) {
+  const db = await getDatabase();
+  const result = await db.collection<FavoriteEvent>('favorite_events').insertOne({
+    ...event,
+    timestamp: new Date(),
   });
   return result.insertedId;
 }
