@@ -3,7 +3,7 @@ import { User } from './auth';
 
 const USERS_COLLECTION = 'users';
 
-export async function createUser(userData: Omit<User, '_id' | 'createdAt'>): Promise<User> {
+export async function createUser(userData: Omit<User, '_id' | 'createdAt' | 'surveyCompleted' | 'favoriteGenres' | 'theme'>): Promise<User> {
   const db = await getDatabase();
   const usersCollection = db.collection<User>(USERS_COLLECTION);
 
