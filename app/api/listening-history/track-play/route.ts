@@ -30,6 +30,13 @@ export async function POST(request: NextRequest) {
       completed,
     } = body;
 
+    console.log('📊 [API] Received play event:', {
+      trackTitle,
+      durationPlayed,
+      durationPlayedType: typeof durationPlayed,
+      completed,
+    });
+
     if (!trackId || !trackTitle || !trackArtist) {
       return NextResponse.json(
         { error: 'Missing required track information' },
@@ -50,6 +57,8 @@ export async function POST(request: NextRequest) {
       completed: completed || false,
       playedAt: new Date(),
     });
+
+    console.log('📊 [API] Recorded play event to DB with eventId:', eventId.toString());
 
     return NextResponse.json({
       success: true,

@@ -32,6 +32,12 @@ export function useAudioPlayer(trackInfo?: TrackInfo) {
     const currentTrackInfo = trackInfoRef.current;
     if (!currentTrackInfo) return;
 
+    console.log('🎵 [useAudioPlayer] Tracking play event:', {
+      durationPlayed,
+      completed,
+      trackTitle: currentTrackInfo.trackTitle,
+    });
+
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
@@ -73,9 +79,20 @@ export function useAudioPlayer(trackInfo?: TrackInfo) {
       };
 
       const handleEnded = () => {
-        const durationPlayed = Date.now() - playStartTimeRef.current;
-        if (trackInfoRef.current && durationPlayed > 0) {
-          trackPlayEvent(durationPlayed / 1000, true);
+        // Only track if we actually started playing (playStartTime is not 0)
+        if (playStartTimeRef.current > 0) {
+          const durationPlayed = Date.now() - playStartTimeRef.current;
+          console.log('🎵 [handleEnded] Duration calculation:', {
+            now: Date.now(),
+            playStartTime: playStartTimeRef.current,
+            durationMs: durationPlayed,
+            durationSeconds: durationPlayed / 1000,
+          });
+          if (trackInfoRef.current && durationPlayed > 0) {
+            trackPlayEvent(durationPlayed / 1000, true);
+          }
+        } else {
+          console.log('🎵 [handleEnded] Skipping tracking - playStartTime is 0');
         }
         setIsPlaying(false);
         setCurrentTime(0);
@@ -145,10 +162,22 @@ export function useAudioPlayer(trackInfo?: TrackInfo) {
 
   const pause = useCallback(() => {
     if (audioRef.current) {
-      const durationPlayed = Date.now() - playStartTimeRef.current;
-      if (trackInfoRef.current && durationPlayed > 3000 && !hasTrackedPlayRef.current) {
-        trackPlayEvent(durationPlayed / 1000, false);
-        hasTrackedPlayRef.current = true;
+      // Only track if we actually started playing (playStartTime is not 0)
+      if (playStartTimeRef.current > 0) {
+        const durationPlayed = Date.now() - playStartTimeRef.current;
+        console.log('🎵 [pause] Duration calculation:', {
+          now: Date.now(),
+          playStartTime: playStartTimeRef.current,
+          durationMs: durationPlayed,
+          durationSeconds: durationPlayed / 1000,
+          willTrack: durationPlayed > 3000 && !hasTrackedPlayRef.current,
+        });
+        if (trackInfoRef.current && durationPlayed > 3000 && !hasTrackedPlayRef.current) {
+          trackPlayEvent(durationPlayed / 1000, false);
+          hasTrackedPlayRef.current = true;
+        }
+      } else {
+        console.log('🎵 [pause] Skipping tracking - playStartTime is 0');
       }
       audioRef.current.pause();
       setIsPlaying(false);

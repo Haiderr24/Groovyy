@@ -19,6 +19,9 @@ export async function GET(request: NextRequest) {
 
     const stats = await getListeningStats(new ObjectId(decoded.userId));
 
+    console.log('📊 [Stats API] Raw stats from DB:', stats);
+    console.log('📊 [Stats API] Formatted duration:', formatDuration(stats.totalDuration));
+
     return NextResponse.json({
       stats: {
         totalPlays: stats.totalPlays,
