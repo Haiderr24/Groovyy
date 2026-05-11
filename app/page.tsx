@@ -49,6 +49,31 @@ export default function Home() {
     } : undefined;
   }, [tracks, currentIndex]);
 
+  useEffect(() => {
+    tracksRef.current = tracks;
+  }, [tracks]);
+
+  const goToNext = useCallback(() => {
+    setDirection('down');
+    setCurrentIndex((prev) => {
+      const next = prev < tracksRef.current.length - 1 ? prev + 1 : 0;
+      console.log('⬇️ Index:', prev, '→', next, '| Total tracks:', tracksRef.current.length);
+      return next;
+    });
+    setShowHint(false);
+  }, []);
+
+  const goToPrevious = useCallback(() => {
+    setDirection('up');
+    setCurrentIndex((prev) => {
+      if (prev > 0) {
+        return prev - 1;
+      }
+      return Math.max(0, tracksRef.current.length - 1);
+    });
+    setShowHint(false);
+  }, []);
+
   const {
     isPlaying,
     currentTime,
@@ -61,7 +86,7 @@ export default function Home() {
     analyser,
     pause,
     play
-  } = useAudioPlayer(trackInfo);
+  } = useAudioPlayer(trackInfo, goToNext);
 
   const fetchMoreTracks = useCallback(async () => {
   if (isFetchingMore || !user) return;
@@ -199,31 +224,6 @@ export default function Home() {
       await addFavorite(currentTrack);
     }
   };
-
-  useEffect(() => {
-    tracksRef.current = tracks;
-  }, [tracks]);
-
-  const goToNext = useCallback(() => {
-    setDirection('down');
-    setCurrentIndex((prev) => {
-      const next = prev < tracksRef.current.length - 1 ? prev + 1 : 0;
-      console.log('⬇️ Index:', prev, '→', next, '| Total tracks:', tracksRef.current.length);
-      return next;
-    });
-    setShowHint(false);
-  }, []);
-
-  const goToPrevious = useCallback(() => {
-    setDirection('up');
-    setCurrentIndex((prev) => {
-      if (prev > 0) {
-        return prev - 1;
-      }
-      return Math.max(0, tracksRef.current.length - 1);
-    });
-    setShowHint(false);
-  }, []);
 
   useEffect(() => {
     if (isLoading) return;

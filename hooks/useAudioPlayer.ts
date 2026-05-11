@@ -10,7 +10,12 @@ interface TrackInfo {
   previewUrl: string;
 }
 
-export function useAudioPlayer(trackInfo?: TrackInfo) {
+interface UseAudioPlayerOptions {
+  trackInfo?: TrackInfo;
+  onTrackEnd?: () => void;
+}
+
+export function useAudioPlayer(trackInfo?: TrackInfo, onTrackEnd?: () => void) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -97,6 +102,11 @@ export function useAudioPlayer(trackInfo?: TrackInfo) {
         setIsPlaying(false);
         setCurrentTime(0);
         hasTrackedPlayRef.current = false;
+
+        // Call the onTrackEnd callback if provided
+        if (onTrackEnd) {
+          onTrackEnd();
+        }
       };
 
       audioRef.current.addEventListener('timeupdate', handleTimeUpdate);
@@ -110,7 +120,7 @@ export function useAudioPlayer(trackInfo?: TrackInfo) {
         audioRef.current?.removeEventListener('ended', handleEnded);
       };
     }
-  }, [trackPlayEvent]);
+  }, [trackPlayEvent, onTrackEnd]);
 
   const initAudioContext = useCallback(() => {
     if (audioRef.current && !audioContextRef.current) {
